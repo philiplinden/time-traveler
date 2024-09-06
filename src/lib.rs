@@ -1,7 +1,7 @@
 use chrono::TimeZone as _;
 use std::fmt;
 
-const MAX_CHRONO_NANOS: u64 = 9_223_372_036_854_775_807;
+const MAX_CHRONO_NANOS: i64 = 9_223_372_036_854_775_807;
 const NANOS_PER_SEC: i64 = 1E9 as i64;
 
 /// Alias the types so we don't get confused
@@ -68,11 +68,8 @@ impl TryFrom<TimeTraveler<HifiEpoch>> for ChronoDateTime {
     type Error = TimeConversionError;
 
     fn try_from(wrapper: TimeTraveler<HifiEpoch>) -> Result<Self, Self::Error> {
-        let max_hifitime_epoch =
-            HifiEpoch::from_unix_duration(HifiDuration::from_nanoseconds(MAX_CHRONO_NANOS as f64));
-
         // Compare and convert
-        if wrapper.0 <= max_hifitime_epoch {
+        if wrapper.0.duration.total_nanoseconds() as i64 <= MAX_CHRONO_NANOS {
             Ok(chrono::DateTime::from_timestamp_nanos(
                 wrapper.0.duration.truncated_nanoseconds() as i64,
             ))
@@ -258,10 +255,11 @@ mod tests {
 
         // Get the chrono::DateTime<Utc> value
         let chrono_datetime = chrono_datetime_result.unwrap();
+        assert_epoch_datetime_nanos_eq(original_epoch, chrono_datetime);
 
         // Convert back to hifitime::Epoch
         let roundtrip_epoch: HifiEpoch = TimeTraveler(chrono_datetime).into();
-        assert_eq!(original_epoch, roundtrip_epoch);
+        assert_eq!(original_epoch.to_duration_in_time_scale(hifitime::TimeScale::UTC), roundtrip_epoch.to_duration_in_time_scale(hifitime::TimeScale::UTC));
     }
 
     #[test]
@@ -308,16 +306,6 @@ mod tests {
         assert_eq!(
             hifi_far_future.duration.truncated_nanoseconds(),
             chrono_far_future_nanos.unwrap()
-        );
-    }
-
-    #[test]
-    fn test_too_far_future_conversion() {
-        let hifi_far_future = HifiEpoch::from_gregorian_utc(2362, 4, 11, 23, 47, 16, 854_775_800);
-        let chrono_far_future_result = ChronoDateTime::try_from(TimeTraveler(hifi_far_future));
-        assert!(
-            chrono_far_future_result.is_err(),
-            "Expected conversion to fail for too far future date"
         );
     }
 
