@@ -1,5 +1,5 @@
 [package]
-name = "chrono-hifitime"
+name = "time-traveler"
 description = "A lightweight crate for converting between chrono and hifitime durations and datetimes."
 version = "0.1.0"
 authors = ["Philip Linden <lindenphilipj@gmail.com>"]
