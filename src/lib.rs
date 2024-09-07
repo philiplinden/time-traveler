@@ -175,17 +175,6 @@ mod tests {
         assert_eq!(datetime.second(), s as u32);
         assert_eq!(datetime.nanosecond(), ns);
     }
-    // Helper function to compare HifiEpoch and DateTime<Utc> using nanoseconds.
-    fn assert_epoch_datetime_nanos_eq(
-        epoch: hifitime::Epoch,
-        datetime: chrono::DateTime<chrono::Utc>,
-    ) {
-        let epoch_nanos = epoch.duration.truncated_nanoseconds();
-        let datetime_nanos_result = datetime.timestamp_nanos_opt();
-        assert!(datetime_nanos_result.is_some());
-        let datetime_nanos = datetime_nanos_result.unwrap();
-        assert_eq!(epoch_nanos, datetime_nanos);
-    }
 
     // Helper function to compare HifiDuration and ChronoDuration. Only accurate
     // to i64 nanoseconds.
@@ -211,7 +200,10 @@ mod tests {
             "Conversion to chrono::DateTime<Utc> failed"
         );
         let chrono_utc = chrono_utc_result.unwrap();
-        assert_epoch_datetime_nanos_eq(hifi_epoch, chrono_utc);
+
+        println!("hifi {:?}", hifi_epoch);
+        println!("chrn {:?}", chrono_utc);
+        assert_epoch_datetime_eq(hifi_epoch, chrono_utc);
     }
 
     #[test]
@@ -252,13 +244,15 @@ mod tests {
             chrono_datetime_result.is_ok(),
             "Conversion to chrono::DateTime<Utc> failed"
         );
-
         // Get the chrono::DateTime<Utc> value
         let chrono_datetime = chrono_datetime_result.unwrap();
-        assert_epoch_datetime_nanos_eq(original_epoch, chrono_datetime);
+        assert_epoch_datetime_eq(original_epoch, chrono_datetime);
 
         // Convert back to hifitime::Epoch
         let roundtrip_epoch: HifiEpoch = TimeTraveler(chrono_datetime).into();
+        println!("hifi {:?}", original_epoch);
+        println!("chrn {:?}", chrono_datetime);
+        println!("rtrp {:?}", roundtrip_epoch);
         assert_eq!(original_epoch.to_duration_in_time_scale(hifitime::TimeScale::UTC), roundtrip_epoch.to_duration_in_time_scale(hifitime::TimeScale::UTC));
     }
 
@@ -274,6 +268,8 @@ mod tests {
         );
         let chrono_duration = chrono_duration_result.unwrap();
         let roundtrip_duration: HifiDuration = TimeTraveler(chrono_duration).into();
+        println!("hifi {:?}", original_duration);
+        println!("chrn {:?}", chrono_duration);
         assert!(
             (original_duration - roundtrip_duration).abs() < HifiDuration::from_milliseconds(1.)
         );
@@ -289,7 +285,10 @@ mod tests {
             "Conversion to chrono::DateTime<Utc> failed"
         );
         let chrono_unix_epoch = chrono_unix_epoch_result.unwrap();
-        assert_epoch_datetime_nanos_eq(hifi_unix_epoch, chrono_unix_epoch);
+
+        println!("hifi {:}", hifi_unix_epoch);
+        println!("chrn {:}", chrono_unix_epoch);
+        assert_epoch_datetime_eq(hifi_unix_epoch, chrono_unix_epoch);
     }
 
     #[test]
@@ -318,7 +317,7 @@ mod tests {
             "Conversion to chrono::DateTime<Utc> failed"
         );
         let chrono_pre_unix_epoch = chrono_pre_unix_epoch_result.unwrap();
-        assert_epoch_datetime_nanos_eq(pre_unix_epoch, chrono_pre_unix_epoch);
+        assert_epoch_datetime_eq(pre_unix_epoch, chrono_pre_unix_epoch);
     }
 
     #[test]
