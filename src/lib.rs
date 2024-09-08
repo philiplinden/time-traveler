@@ -71,7 +71,7 @@ impl TryFrom<TimeTraveler<HifiEpoch>> for ChronoDateTime {
         // Compare and convert
         if wrapper.0.duration.total_nanoseconds() as i64 <= MAX_CHRONO_NANOS {
             Ok(chrono::DateTime::from_timestamp_nanos(
-                wrapper.0.duration.truncated_nanoseconds() as i64,
+                wrapper.0.duration.total_nanoseconds() as i64,
             ))
         } else {
             Err(TimeConversionError {
